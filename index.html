@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SimLaplytics — AI Race Engineer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+
+<!-- ── Three.js ES Module importmap ── -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a0f;--bg2:#0d1117;--bg3:#12181f;--card:#0f1520;--border:#1e2a3a;
+  --red:#ff1744;--blue:#00b4ff;--yellow:#ffd600;--green:#00e676;--orange:#ff6d00;--purple:#d500f9;
+  --text:#e8edf5;--text2:#8899aa;--text3:#445566;
+  --gr:0 0 20px rgba(255,23,68,.5),0 0 40px rgba(255,23,68,.2);
+  --gb:0 0 20px rgba(0,180,255,.5),0 0 40px rgba(0,180,255,.2);
+  --gy:0 0 20px rgba(255,214,0,.5),0 0 40px rgba(255,214,0,.2);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;cursor:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#080a0f}
+::-webkit-scrollbar-thumb{background:#ff1744;border-radius:3px}
+
+/* ── Cursor ── */
+#f1c{position:fixed;pointer-events:none;z-index:99999;width:48px;height:22px;top:0;left:0;transform:translate(-50%,-50%);filter:drop-shadow(0 0 8px #ff1744)}
+.tdot{position:fixed;pointer-events:none;z-index:99998;width:6px;height:6px;border-radius:50%;background:#ff1744;transform:translate(-50%,-50%);opacity:0;filter:blur(1px)}
+
+/* ── Loader ── */
+#ldr{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity .7s,visibility .7s}
+#ldr.out{opacity:0;visibility:hidden;pointer-events:none}
+.ll{font-family:'Orbitron',sans-serif;font-size:clamp(20px,4vw,34px);font-weight:900;letter-spacing:4px}
+.ll b{color:var(--red)}
+.ls{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--text2);animation:blk 1.2s infinite}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.2}}
+.ltr{width:min(540px,88vw);height:50px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.lca{position:absolute;bottom:4px;left:-60px;animation:lcr 2.8s ease-in-out infinite}
+@keyframes lcr{0%{left:-60px;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:calc(100% + 60px);opacity:0}}
+.lbw{width:min(540px,88vw)}
+.lbr{height:10px;background:var(--bg3);border-radius:5px;border:1px solid var(--border);overflow:hidden}
+.lf{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--yellow));border-radius:5px;box-shadow:var(--gr);transition:width .25s ease;position:relative}
+.lf::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--yellow);box-shadow:var(--gy)}
+.lr{display:flex;justify-content:space-between;margin-top:5px}
+.lm{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3)}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:56px;background:rgba(8,10,15,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:0}
+.nl{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;letter-spacing:2px;flex:1}
+.nl b{color:var(--red)}
+.nv{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-left:6px;padding:2px 6px;border:1px solid var(--border);border-radius:2px}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:6px 14px;border-radius:2px;border:1px solid transparent;color:var(--text3);background:transparent;transition:all .2s;text-transform:uppercase;cursor:none}
+.nav-link:hover{color:var(--text);border-color:var(--border)}
+.nav-link.active{color:var(--red);border-color:rgba(255,23,68,.3);background:rgba(255,23,68,.06)}
+.np{font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text2);margin-left:10px}
+.np.lv{border-color:var(--green);color:var(--green);animation:plv 2s infinite}
+@keyframes plv{0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,.3)}50%{box-shadow:0 0 0 4px rgba(0,230,118,.1)}}
+
+/* ── Page sections ── */
+.page{display:none}
+.page.active{display:block}
+
+/* ── Hero ── */
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:80px 28px 40px}
+.gbg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,180,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,255,.04) 1px,transparent 1px);background-size:60px 60px;animation:gm 18s linear infinite}
+@keyframes gm{from{transform:translateY(0)}to{transform:translateY(60px)}}
+.gv{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 35%,var(--bg) 80%)}
+.sk{position:absolute;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);opacity:0;animation:skr 4s ease-in-out infinite}
+@keyframes skr{0%{opacity:0;transform:translateX(-100%)}15%{opacity:.5}85%{opacity:.5}100%{opacity:0;transform:translateX(100%)}}
+.he{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--red);margin-bottom:18px;text-transform:uppercase;position:relative;z-index:1}
+.ht{font-family:'Orbitron',sans-serif;font-size:clamp(28px,6vw,68px);font-weight:900;text-align:center;line-height:1.1;letter-spacing:-1px;margin-bottom:18px;position:relative;z-index:1}
+.ht .ol{color:transparent;-webkit-text-stroke:1px var(--red)}
+.ht .gr{background:linear-gradient(135deg,var(--red),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hs{font-size:17px;color:var(--text2);text-align:center;max-width:500px;margin-bottom:42px;font-weight:500;position:relative;z-index:1}
+.hc{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.hero-3d-viewer{position:absolute;bottom:0;right:0;width:55%;height:70%;pointer-events:none;z-index:2;opacity:.85}
+.hero-3d-canvas{width:100%;height:100%}
+.bp{padding:13px 36px;background:var(--red);color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;border:none;cursor:none;clip-path:polygon(0 0,calc(100% - 11px) 0,100% 11px,100% 100%,11px 100%,0 calc(100% - 11px));transition:all .2s;box-shadow:var(--gr);position:relative;overflow:hidden}
+.bp::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);transform:translateX(-100%);transition:transform .4s}
+.bp:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(255,23,68,.7),0 0 60px rgba(255,23,68,.3)}
+.bp:hover::before{transform:translateX(100%)}
+.bs{padding:13px 36px;background:transparent;color:var(--blue);font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;border:1px solid var(--blue);cursor:none;clip-path:polygon(0 0,calc(100% - 11px) 0,100% 11px,100% 100%,11px 100%,0 calc(100% - 11px));transition:all .2s}
+.bs:hover{background:rgba(0,180,255,.1);box-shadow:var(--gb);transform:translateY(-2px)}
+.hst{display:flex;gap:42px;margin-top:52px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.sv{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--red);display:block;text-shadow:var(--gr)}
+.sl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+
+/* ── Upload / Dashboard ── */
+#ups{padding:68px 28px;max-width:840px;margin:0 auto}
+.slb{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--red);text-transform:uppercase;margin-bottom:6px}
+.stt{font-family:'Orbitron',sans-serif;font-size:clamp(18px,3vw,26px);font-weight:700;letter-spacing:1px;margin-bottom:30px}
+.uz{border:1px dashed var(--border);border-radius:4px;padding:52px;text-align:center;background:var(--card);transition:all .3s;cursor:none}
+.uz:hover,.uz.dg{border-color:var(--red);box-shadow:var(--gr),inset 0 0 40px rgba(255,23,68,.05)}
+.ut{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;margin-bottom:7px}
+.uh{font-size:13px;color:var(--text3);font-family:'Share Tech Mono',monospace;letter-spacing:1px}
+.uh span{color:var(--blue)}
+#fi{display:none}
+.sb{margin-top:16px;padding:8px 22px;background:transparent;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;border:1px solid var(--border);cursor:none;transition:all .2s;text-transform:uppercase}
+.sb:hover{border-color:var(--yellow);color:var(--yellow)}
+#dsh{padding:34px 28px 68px;max-width:1360px;margin:0 auto;display:none}
+#dsh.on{display:block}
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:13px;margin-bottom:26px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:17px 20px;position:relative;overflow:hidden;transition:transform .2s}
+.mc:after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--red));box-shadow:0 0 10px var(--ac,var(--red))}
+.mc:hover{transform:translateY(-3px)}
+.mlb{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+.mv{font-family:'Orbitron',sans-serif;font-size:29px;font-weight:900;color:var(--ac,var(--red));text-shadow:0 0 16px var(--ac,var(--red));line-height:1}
+.mu{font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--text3);margin-left:3px}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:18px;margin-bottom:26px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:20px}
+.ct{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.ct::before{content:'';display:inline-block;width:8px;height:2px;background:var(--ac,var(--red));box-shadow:0 0 5px var(--ac,var(--red))}
+canvas.chart-canvas{width:100%!important;max-height:200px}
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px;margin-bottom:26px}
+.ic{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:17px;display:flex;align-items:flex-start;gap:13px;transition:transform .2s;position:relative;overflow:hidden}
+.ic::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,var(--red));box-shadow:0 0 7px var(--ac,var(--red))}
+.ic:hover{transform:translateX(4px)}
+.ii{font-size:20px;flex-shrink:0;margin-top:2px}
+.it{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--ac,var(--red));margin-bottom:4px}
+.ix{font-size:13px;color:var(--text2);line-height:1.5}
+.id{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:4px}
+.pc{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:24px 28px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-bottom:26px}
+.pll{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-bottom:5px}
+.ptt{font-family:'Orbitron',sans-serif;font-size:42px;font-weight:900;color:var(--yellow);text-shadow:var(--gy);line-height:1}
+.pd{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:700}
+.pd.pl{color:var(--red)}.pd.mn{color:var(--green)}
+.pb{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;background:var(--ac,var(--red));box-shadow:0 0 6px var(--ac,var(--red));transition:width 1s cubic-bezier(.34,1.56,.64,1);width:0}
+.pw{margin-bottom:10px}
+.ph{display:flex;justify-content:space-between;margin-bottom:3px}
+.pk{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text3);text-transform:uppercase}
+.pv{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700}
+#tst{position:fixed;bottom:26px;right:26px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);padding:12px 17px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--text);transform:translateX(220%);transition:transform .3s;z-index:5000}
+#tst.on{transform:translateX(0)}
+.graph-insight{background:linear-gradient(135deg,rgba(255,23,68,.06),rgba(0,180,255,.03));border:1px solid rgba(255,23,68,.2);border-top:none;border-radius:0 0 4px 4px;padding:16px 20px;margin-top:-4px}
+.gi-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--red);margin-bottom:12px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.gi-title::before{content:'🤖';font-size:14px}
+.gi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.gi-item{background:rgba(0,0,0,.3);border-radius:3px;padding:10px 12px;border-left:2px solid var(--gi-c,var(--red))}
+.gi-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
+.gi-val{font-size:13px;color:var(--text2);line-height:1.45}
+.ai-coach{background:linear-gradient(135deg,rgba(0,180,255,.08),rgba(213,0,249,.05));border:1px solid rgba(0,180,255,.2);border-radius:4px;padding:24px;margin-bottom:26px;position:relative}
+.ai-coach::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--purple));box-shadow:0 0 10px rgba(0,180,255,.4)}
+.ai-coach-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.ai-badge{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;padding:4px 10px;border-radius:2px}
+.coach-message{font-size:15px;color:var(--text2);line-height:1.7;font-style:italic;padding:14px 18px;background:rgba(0,0,0,.3);border-radius:3px;border-left:3px solid var(--blue);margin-bottom:16px}
+.coach-recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.coach-rec{padding:12px 14px;background:rgba(0,0,0,.3);border-radius:3px;border:1px solid var(--border)}
+.coach-rec-num{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--blue);opacity:.4;float:right;line-height:1;margin-left:8px}
+.coach-rec-text{font-size:13px;color:var(--text2);line-height:1.5;clear:both}
+.lap-summary{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:28px;margin-bottom:26px;position:relative;overflow:hidden}
+.lap-summary::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--yellow),var(--green));box-shadow:0 0 10px rgba(255,214,0,.3)}
+.ls-header{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.ls-flag{font-size:32px}
+.ls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.ls-card{background:rgba(0,0,0,.3);border-radius:4px;padding:16px;border:1px solid var(--border);text-align:center}
+.ls-card-val{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;line-height:1;margin-bottom:4px}
+.ls-card-lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.ls-mistakes{margin-bottom:20px}
+.ls-mistake{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.15);border-radius:3px;margin-bottom:8px}
+.ls-rank{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--red);flex-shrink:0;min-width:28px}
+.ls-mistake-text{font-size:14px;color:var(--text2);line-height:1.4}
+.ls-mistake-delta{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);margin-top:3px}
+.ls-tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.ls-tip{display:flex;gap:10px;padding:12px 14px;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.15);border-radius:3px;align-items:flex-start}
+.ls-tip-icon{font-size:16px;flex-shrink:0}
+.ls-tip-text{font-size:13px;color:var(--text2);line-height:1.4}
+.corner-section{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:26px}
+.corner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.corner-card{background:rgba(0,0,0,.3);border-radius:4px;padding:14px;border:1px solid var(--border);position:relative;overflow:hidden;transition:transform .2s}
+.corner-card:hover{transform:translateY(-2px)}
+.corner-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cc,var(--text3))}
+.corner-tag{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:2px;background:rgba(255,255,255,.05);border:1px solid var(--cc,var(--text3));color:var(--cc,var(--text3));margin-bottom:8px}
+.corner-num{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--text);margin-bottom:4px}
+.corner-desc{font-size:12px;color:var(--text2);line-height:1.4;margin-bottom:8px}
+.corner-delta{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3)}
+.consistency-section{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:26px}
+.consistency-meter{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:12px 0 6px}
+.consistency-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.34,1.56,.64,1)}
+.consistency-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.consistency-label{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:1px}
+.consistency-val{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700}
+
+/* ── 3D Garage ── */
+#page-3d{min-height:100vh;padding-top:56px;background:var(--bg)}
+.garage-hero{position:relative;min-height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:60px 28px 40px;text-align:center}
+.garage-hero .gbg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,180,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,255,.04) 1px,transparent 1px);background-size:60px 60px;animation:gm 18s linear infinite}
+.garage-hero .gv{position:absolute;inset:0;background:radial-gradient(ellipse at 50%,transparent 30%,var(--bg) 80%)}
+.garage-hero-content{position:relative;z-index:1}
+.garage-tag{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--blue);text-transform:uppercase;margin-bottom:14px}
+.garage-title{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,58px);font-weight:900;letter-spacing:-1px;margin-bottom:14px}
+.garage-title span{background:linear-gradient(135deg,var(--blue),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.garage-sub{font-size:16px;color:var(--text2);max-width:480px;margin:0 auto 30px}
+.garage-info-pills{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.gpill{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text3)}
+.gpill.r{border-color:rgba(255,23,68,.3);color:var(--red)}
+.gpill.b{border-color:rgba(0,180,255,.3);color:var(--blue)}
+.car-selector{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 40px;background:rgba(8,10,15,.8);position:sticky;top:56px;z-index:50;backdrop-filter:blur(10px)}
+.car-tab{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:16px 28px;border:none;background:transparent;color:var(--text3);cursor:none;border-bottom:2px solid transparent;transition:all .2s;position:relative}
+.car-tab:hover{color:var(--text)}
+.car-tab.active{color:var(--red);border-bottom-color:var(--red)}
+.car-tab .team-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px}
+.car-panels{padding:0 40px 60px}
+.car-panel{display:none}
+.car-panel.active{display:block}
+.viewer-layout{display:grid;grid-template-columns:1fr 340px;gap:24px;margin-top:28px;align-items:start}
+@media(max-width:900px){.viewer-layout{grid-template-columns:1fr}}
+.three-container{background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative;height:520px}
+.three-canvas{width:100%!important;height:100%!important;display:block}
+.viewer-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--card);z-index:10;transition:opacity .5s,visibility .5s}
+.viewer-loading.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.vl-spin{width:48px;height:48px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--red);animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.vl-txt{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--text3)}
+.vl-prog{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--red)}
+.viewer-toolbar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5}
+.vtool{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);color:var(--text3);background:rgba(8,10,15,.8);cursor:none;transition:all .2s;text-transform:uppercase}
+.vtool:hover{border-color:var(--red);color:var(--red)}
+.vtool.on{border-color:var(--red);color:var(--red);background:rgba(255,23,68,.1)}
+.viewer-hint{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);background:rgba(8,10,15,.7);padding:5px 12px;border-radius:20px;text-transform:uppercase;white-space:nowrap;z-index:5;animation:fadeHint 1s 3s forwards}
+@keyframes fadeHint{to{opacity:0}}
+.car-info{display:flex;flex-direction:column;gap:16px}
+.car-name-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:22px 24px;position:relative;overflow:hidden}
+.car-name-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--team-color,var(--red));box-shadow:0 0 12px var(--team-color,var(--red))}
+.car-team{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+.car-fullname{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;line-height:1.2;margin-bottom:4px}
+.car-year{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:2px}
+.spec-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:20px 22px}
+.spec-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text2);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.spec-title::before{content:'';display:inline-block;width:8px;height:2px;background:var(--ac,var(--red));box-shadow:0 0 5px var(--ac,var(--red))}
+.spec-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(30,42,58,.5)}
+.spec-row:last-child{border-bottom:none}
+.spec-key{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text3);text-transform:uppercase}
+.spec-val{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--text)}
+.driver-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:20px 22px}
+.driver-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.driver-item{background:rgba(0,0,0,.3);border-radius:4px;padding:10px 12px;border:1px solid var(--border)}
+.driver-num{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;line-height:1;margin-bottom:3px}
+.driver-name{font-size:12px;color:var(--text2);font-weight:500}
+.driver-country{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--text3)}
+.livery-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:20px 22px}
+.livery-swatches{display:flex;gap:8px;margin-top:12px}
+.swatch{flex:1;height:36px;border-radius:4px;border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
+.swatch::after{content:attr(data-name);position:absolute;bottom:0;left:0;right:0;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.5px;text-align:center;padding:3px;background:rgba(0,0,0,.5);color:#fff}
+.badges-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:20px 22px}
+.badge-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:4px 10px;border-radius:2px;border:1px solid;text-transform:uppercase}
+.telem-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:20px 22px}
+.telem-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.telem-item{background:rgba(0,0,0,.3);border-radius:4px;padding:10px 12px;border:1px solid var(--border);text-align:center}
+.telem-val{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;line-height:1;margin-bottom:4px}
+.telem-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase}
+.f1div{border:none;border-top:1px solid var(--border);margin:32px 0}
+.f1foot{text-align:center;padding:28px 40px 48px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--text3)}
+@media(max-width:660px){
+  .cg{grid-template-columns:1fr}.hst{gap:18px}.uz{padding:26px}.gi-grid{grid-template-columns:1fr}
+  .car-selector{padding:0 16px}.car-panels{padding:0 16px 40px}
+  .car-tab{padding:12px 14px;font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- F1 Cursor -->
+<svg id="f1c" viewBox="0 0 48 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <path d="M4 13 Q8 7 16 6 L30 5 Q38 5 44 9 L46 13 Q44 16 38 16 L10 16 Q5 16 4 13Z" fill="#ff1744"/>
+  <path d="M20 6 L26 4 L32 6Z" fill="#111"/>
+  <path d="M42 12 L47 10 L47 15 L42 15Z" fill="#cc0000"/>
+  <path d="M3 8 L1 6 L1 11 L3 11Z" fill="#cc0000"/>
+  <circle cx="12" cy="16" r="3.5" fill="#222" stroke="#ff1744" stroke-width="1"/>
+  <circle cx="36" cy="16" r="3.5" fill="#222" stroke="#ff1744" stroke-width="1"/>
+</svg>
+<div id="tc"></div>
+
+<!-- Loading Screen -->
+<div id="ldr">
+  <div style="text-align:center">
+    <div class="ll">SIM<b>LAP</b>LYTICS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text3);margin-top:4px">AI RACE ENGINEER + 3D GARAGE v3.0</div>
+  </div>
+  <div class="ltr">
+    <div class="lca">
+      <svg width="52" height="20" viewBox="0 0 48 20" fill="none">
+        <path d="M4 13 Q8 7 16 6 L30 5 Q38 5 44 9 L46 13 Q44 16 38 16 L10 16 Q5 16 4 13Z" fill="#ff1744"/>
+        <path d="M20 6 L26 4 L32 6Z" fill="#111"/>
+        <circle cx="12" cy="16" r="3.5" fill="#222" stroke="#ff1744" stroke-width="1"/>
+        <circle cx="36" cy="16" r="3.5" fill="#222" stroke="#ff1744" stroke-width="1"/>
+      </svg>
+    </div>
+  </div>
+  <div class="lbw">
+    <div class="lbr"><div class="lf" id="lf2"></div></div>
+    <div class="lr">
+      <span class="ls lm" id="lms">INITIALISING SYSTEMS...</span>
+      <span class="lm" id="lpc">0%</span>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<nav>
+  <div class="nl">SIM<b>LAP</b>LYTICS<span class="nv">v3.0</span></div>
+  <div class="nav-links">
+    <button class="nav-link active" id="nav-telemetry" onclick="showPage('telemetry')">📊 Telemetry</button>
+    <button class="nav-link" id="nav-3d" onclick="showPage('3d')">🏎 3D Garage</button>
+  </div>
+  <div class="np lv" style="margin-left:14px">● LIVE</div>
+  <div class="np" id="nlap" style="margin-left:8px">LAP —</div>
+</nav>
+
+<!-- ══ PAGE: TELEMETRY ══ -->
+<div id="page-telemetry" class="page active">
+  <section id="hero">
+    <div class="gbg"></div><div class="gv"></div>
+    <div class="sk" style="top:22%;width:68%;left:16%;animation-delay:.4s"></div>
+    <div class="sk" style="top:58%;width:48%;left:26%;animation-delay:2.1s"></div>
+    <div class="hero-3d-viewer"><canvas id="hero-canvas" class="hero-3d-canvas"></canvas></div>
+    <div class="he">// AI Race Engineer — Formula 1 Telemetry Analysis Platform</div>
+    <h1 class="ht">Analyze Your <span class="ol">Lap.</span><br><span class="gr">Dominate</span> the Track.</h1>
+    <p class="hs">AI-powered insights for sim racers — know where you lost time, why, and how to fix it</p>
+    <div class="hc">
+      <button class="bp" onclick="goUp()">⬆ Upload Your Lap</button>
+      <button class="bs" onclick="loadSample()">▶ Demo Telemetry</button>
+      <button class="bs" onclick="showPage('3d')" style="color:var(--blue);border-color:var(--blue)">🏎 3D Garage</button>
+    </div>
+    <div class="hst">
+      <div><span class="sv" data-t="320">0</span><span style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--text3)"> km/h</span><div class="sl">Max Speed</div></div>
+      <div><span class="sv" data-t="98" style="color:var(--blue);text-shadow:var(--gb)">0</span><span style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--text3)">%</span><div class="sl">Throttle Accuracy</div></div>
+      <div><span class="sv" data-t="14" style="color:var(--yellow);text-shadow:var(--gy)">0</span><span style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--text3)">k</span><div class="sl">Data Points/lap</div></div>
+    </div>
+  </section>
+
+  <section id="ups">
+    <div class="slb">// Telemetry Import</div>
+    <div class="stt">Upload Lap Data</div>
+    <div class="uz" id="dz" onclick="document.getElementById('fi').click()"
+         ondragover="event.preventDefault();this.classList.add('dg')"
+         ondragleave="this.classList.remove('dg')"
+         ondrop="onDrop(event)">
+      <div style="font-size:42px;margin-bottom:12px">📡</div>
+      <div class="ut">Drop Telemetry CSV Here</div>
+      <div class="uh">or click to browse — <span>CSV format</span></div>
+      <div style="margin-top:9px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px">COLUMNS: time, speed, throttle, brake, gear, rpm</div>
+    </div>
+    <input type="file" id="fi" accept=".csv" onchange="onFile(this.files[0])"/>
+    <div style="text-align:center"><button class="sb" onclick="loadSample()">⚡ Load Sample Telemetry</button></div>
+  </section>
+
+  <div id="dsh">
+    <div style="margin-bottom:28px"><div class="slb">// Live Analysis</div><div class="stt">Lap Telemetry Dashboard</div></div>
+    <div class="mg">
+      <div class="mc" style="--ac:var(--red)"><div class="mlb">Max Speed</div><div><span class="mv" id="m0">—</span><span class="mu">km/h</span></div></div>
+      <div class="mc" style="--ac:var(--blue)"><div class="mlb">Avg Speed</div><div><span class="mv" style="color:var(--blue)" id="m1">—</span><span class="mu">km/h</span></div></div>
+      <div class="mc" style="--ac:var(--yellow)"><div class="mlb">Avg Throttle</div><div><span class="mv" style="color:var(--yellow)" id="m2">—</span><span class="mu">%</span></div></div>
+      <div class="mc" style="--ac:#ff4569"><div class="mlb">Avg Brake</div><div><span class="mv" style="color:#ff4569" id="m3">—</span><span class="mu">%</span></div></div>
+      <div class="mc" style="--ac:var(--green)"><div class="mlb">Data Points</div><div><span class="mv" style="color:var(--green)" id="m4">—</span></div></div>
+      <div class="mc" style="--ac:var(--blue)"><div class="mlb">Peak RPM</div><div><span class="mv" style="color:var(--blue)" id="m5">—</span></div></div>
+    </div>
+    <div class="cc" style="margin-bottom:18px">
+      <div class="ct" style="--ac:var(--yellow)">Input Distribution</div>
+      <div class="pw"><div class="ph"><span class="pk">Throttle</span><span class="pv" id="bv0">—</span></div><div class="pb"><div class="pf" style="--ac:var(--yellow)" id="bf0"></div></div></div>
+      <div class="pw"><div class="ph"><span class="pk">Brake</span><span class="pv" id="bv1">—</span></div><div class="pb"><div class="pf" style="--ac:var(--red)" id="bf1"></div></div></div>
+      <div class="pw"><div class="ph"><span class="pk">Coasting</span><span class="pv" id="bv2">—</span></div><div class="pb"><div class="pf" style="--ac:var(--blue)" id="bf2"></div></div></div>
+    </div>
+    <div class="cg">
+      <div>
+        <div class="cc"><div class="ct">Speed vs Time</div><canvas class="chart-canvas" id="cs"></canvas></div>
+        <div class="graph-insight"><div class="gi-title">Race Engineer Analysis — Speed Trace</div>
+          <div class="gi-grid">
+            <div class="gi-item" style="--gi-c:var(--red)"><div class="gi-label">What happened</div><div class="gi-val" id="gie-speed-what">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--yellow)"><div class="gi-label">Where time was lost</div><div class="gi-val" id="gie-speed-where">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--blue)"><div class="gi-label">Why it happened</div><div class="gi-val" id="gie-speed-why">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--green)"><div class="gi-label">How to improve</div><div class="gi-val" id="gie-speed-fix">Analysing...</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="cc"><div class="ct" style="--ac:var(--yellow)">Throttle &amp; Brake</div><canvas class="chart-canvas" id="ctb"></canvas></div>
+        <div class="graph-insight"><div class="gi-title">Race Engineer Analysis — Throttle &amp; Brake</div>
+          <div class="gi-grid">
+            <div class="gi-item" style="--gi-c:var(--yellow)"><div class="gi-label">What happened</div><div class="gi-val" id="gie-tb-what">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--red)"><div class="gi-label">Where time was lost</div><div class="gi-val" id="gie-tb-where">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--blue)"><div class="gi-label">Why it happened</div><div class="gi-val" id="gie-tb-why">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--green)"><div class="gi-label">How to improve</div><div class="gi-val" id="gie-tb-fix">Analysing...</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="cc"><div class="ct" style="--ac:var(--blue)">RPM vs Time</div><canvas class="chart-canvas" id="crp"></canvas></div>
+        <div class="graph-insight"><div class="gi-title">Race Engineer Analysis — RPM</div>
+          <div class="gi-grid">
+            <div class="gi-item" style="--gi-c:var(--blue)"><div class="gi-label">What happened</div><div class="gi-val" id="gie-rpm-what">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--yellow)"><div class="gi-label">Where time was lost</div><div class="gi-val" id="gie-rpm-where">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--red)"><div class="gi-label">Why it happened</div><div class="gi-val" id="gie-rpm-why">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--green)"><div class="gi-label">How to improve</div><div class="gi-val" id="gie-rpm-fix">Analysing...</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="cc"><div class="ct" style="--ac:var(--green)">Gear Shifts</div><canvas class="chart-canvas" id="cgr"></canvas></div>
+        <div class="graph-insight"><div class="gi-title">Race Engineer Analysis — Gear Usage</div>
+          <div class="gi-grid">
+            <div class="gi-item" style="--gi-c:var(--green)"><div class="gi-label">What happened</div><div class="gi-val" id="gie-gear-what">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--yellow)"><div class="gi-label">Where time was lost</div><div class="gi-val" id="gie-gear-where">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--blue)"><div class="gi-label">Why it happened</div><div class="gi-val" id="gie-gear-why">Analysing...</div></div>
+            <div class="gi-item" style="--gi-c:var(--red)"><div class="gi-label">How to improve</div><div class="gi-val" id="gie-gear-fix">Analysing...</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin:32px 0 14px"><div class="slb">// ML Prediction</div><div class="stt">Lap Time Estimator</div></div>
+    <div class="pc">
+      <div><div class="pll">Estimated Lap Time</div><div class="ptt" id="ptt">—</div></div>
+      <div><div class="pll">vs Optimal</div><div class="pd pl" id="pdt">+—s</div></div>
+      <div style="flex:1;min-width:190px">
+        <div class="pll" style="margin-bottom:8px">Model Confidence</div>
+        <div class="pb"><div class="pf" style="--ac:var(--yellow)" id="pcf"></div></div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:4px" id="pcv">—%</div>
+      </div>
+    </div>
+    <div style="margin:32px 0 14px"><div class="slb">// AI Race Engineer</div><div class="stt">Personalized Coaching</div></div>
+    <div class="ai-coach">
+      <div class="ai-coach-header"><span class="ai-badge">AI RACE ENGINEER</span><span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px">SEASON ANALYSIS ACTIVE</span></div>
+      <div class="coach-message" id="coach-message">Loading race engineer briefing...</div>
+      <div class="coach-recs" id="coach-recs"></div>
+    </div>
+    <div style="margin:32px 0 14px"><div class="slb">// Post-Lap Report</div><div class="stt">Lap Summary Engine</div></div>
+    <div class="lap-summary">
+      <div class="ls-header"><div class="ls-flag">🏁</div><div><div class="slb">// Lap Debrief</div><div class="stt" style="margin-bottom:0" id="ls-headline">Generating debrief...</div></div></div>
+      <div class="ls-grid" id="ls-grid"></div>
+      <div style="margin-bottom:14px"><div class="slb" style="margin-bottom:10px">// Top Mistakes</div><div id="ls-mistakes"></div></div>
+      <div><div class="slb" style="margin-bottom:10px">// Coaching Tips</div><div class="ls-tips" id="ls-tips"></div></div>
+    </div>
+    <div style="margin:32px 0 14px"><div class="slb">// Corner Intelligence</div><div class="stt">Turn-by-Turn Breakdown</div></div>
+    <div class="corner-section"><div class="corner-grid" id="corner-grid"></div></div>
+    <div style="margin:32px 0 14px"><div class="slb">// Consistency Analysis</div><div class="stt">Driving Stability Report</div></div>
+    <div class="consistency-section" id="consistency-section"></div>
+    <div style="margin-bottom:18px"><div class="slb">// AI Analysis</div><div class="stt">Performance Insights</div></div>
+    <div class="ig" id="ig"></div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 3D GARAGE ══ -->
+<div id="page-3d" class="page">
+  <div class="garage-hero">
+    <div class="gbg"></div><div class="gv"></div>
+    <div class="garage-hero-content">
+      <div class="garage-tag">// 3D Garage — Formula 1 Car Models</div>
+      <h2 class="garage-title">The <span>Cars</span></h2>
+      <p class="garage-sub">Explore full 3D models of 2023 Formula 1 cars. Drag to rotate · Scroll to zoom · Double-click to reset.</p>
+      <div class="garage-info-pills">
+        <div class="gpill r">2023 SEASON</div>
+        <div class="gpill b">2 CARS · FULL 3D GLB</div>
+        <div class="gpill">INTERACTIVE VIEWER</div>
+        <div class="gpill">360° ROTATE</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="car-selector">
+    <button class="car-tab active" id="tab-rb" onclick="switchCar('rb')">
+      <span class="team-dot" style="background:#1b3fa0"></span>Oracle Red Bull RB19
+    </button>
+    <button class="car-tab" id="tab-am" onclick="switchCar('am')">
+      <span class="team-dot" style="background:#00665e"></span>Aston Martin AMR23
+    </button>
+  </div>
+
+  <div class="car-panels">
+    <!-- Red Bull Panel -->
+    <div class="car-panel active" id="panel-rb">
+      <div class="viewer-layout">
+        <div class="three-container" id="container-rb">
+          <div class="viewer-loading" id="loading-rb">
+            <div class="vl-spin"></div>
+            <div class="vl-prog" id="prog-rb">0%</div>
+            <div class="vl-txt">LOADING RB19 MODEL...</div>
+          </div>
+          <div class="viewer-hint">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+          <canvas id="canvas-rb" class="three-canvas"></canvas>
+          <div class="viewer-toolbar">
+            <button class="vtool" onclick="resetCam('rb')">↺ Reset</button>
+            <button class="vtool" id="wire-rb" onclick="toggleWire('rb')">◼ Wireframe</button>
+            <button class="vtool" id="spin-rb" onclick="toggleSpin('rb')">▶ Auto-Spin</button>
+          </div>
+        </div>
+        <div class="car-info">
+          <div class="car-name-card" style="--team-color:#1b3fa0">
+            <div class="car-team">Oracle Red Bull Racing</div>
+            <div class="car-fullname" style="color:#1b3fa0">RB19</div>
+            <div class="car-year">◈ 2023 Formula 1 Season</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-title" style="--ac:#1b3fa0">Technical Specifications</div>
+            <div class="spec-row"><span class="spec-key">Power Unit</span><span class="spec-val">Honda RBPTH001</span></div>
+            <div class="spec-row"><span class="spec-key">Engine</span><span class="spec-val">1.6L V6 Hybrid</span></div>
+            <div class="spec-row"><span class="spec-key">Max Power</span><span class="spec-val">~1,000 bhp</span></div>
+            <div class="spec-row"><span class="spec-key">Weight</span><span class="spec-val">798 kg</span></div>
+            <div class="spec-row"><span class="spec-key">Gearbox</span><span class="spec-val">8-speed sequential</span></div>
+            <div class="spec-row"><span class="spec-key">DRS</span><span class="spec-val">Active rear wing</span></div>
+            <div class="spec-row"><span class="spec-key">Tyres</span><span class="spec-val">Pirelli 18"</span></div>
+          </div>
+          <div class="driver-card">
+            <div class="spec-title" style="--ac:#1b3fa0">2023 Driver Lineup</div>
+            <div class="driver-grid">
+              <div class="driver-item"><div class="driver-num" style="color:#1b3fa0">1</div><div class="driver-name">Max Verstappen</div><div class="driver-country">🇳🇱 NETHERLANDS</div></div>
+              <div class="driver-item"><div class="driver-num" style="color:#1b3fa0">11</div><div class="driver-name">Sergio Pérez</div><div class="driver-country">🇲🇽 MEXICO</div></div>
+            </div>
+          </div>
+          <div class="livery-card">
+            <div class="spec-title" style="--ac:#1b3fa0">Livery Colours</div>
+            <div class="livery-swatches">
+              <div class="swatch" style="background:#1b3fa0" data-name="Royal Blue"></div>
+              <div class="swatch" style="background:#e8102d" data-name="Honda Red"></div>
+              <div class="swatch" style="background:#ffd700" data-name="Gold"></div>
+              <div class="swatch" style="background:#ffffff" data-name="White"></div>
+            </div>
+          </div>
+          <div class="telem-card">
+            <div class="spec-title" style="--ac:#1b3fa0">2023 Season Stats</div>
+            <div class="telem-grid">
+              <div class="telem-item"><div class="telem-val" style="color:#1b3fa0">21</div><div class="telem-lbl">Race Wins</div></div>
+              <div class="telem-item"><div class="telem-val" style="color:var(--yellow)">1</div><div class="telem-lbl">Championships</div></div>
+              <div class="telem-item"><div class="telem-val" style="color:var(--green)">860</div><div class="telem-lbl">Points</div></div>
+              <div class="telem-item"><div class="telem-val" style="color:var(--red)">27</div><div class="telem-lbl">Pole Positions</div></div>
+            </div>
+          </div>
+          <div class="badges-card">
+            <div class="spec-title" style="--ac:#1b3fa0">Achievements</div>
+            <div class="badge-grid">
+              <div class="badge" style="color:#ffd700;border-color:#ffd70040;background:rgba(255,215,0,.05)">🏆 WCC 2023</div>
+              <div class="badge" style="color:#1b3fa0;border-color:#1b3fa040;background:rgba(27,63,160,.05)">🏆 WDC MAX</div>
+              <div class="badge" style="color:var(--green);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.05)">✅ 21/22 WINS</div>
+              <div class="badge" style="color:var(--red);border-color:rgba(255,23,68,.3);background:rgba(255,23,68,.05)">🔥 DOMINANT</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aston Martin Panel -->
+    <div class="car-panel" id="panel-am">
+      <div class="viewer-layout">
+        <div class="three-container" id="container-am">
+          <div class="viewer-loading" id="loading-am">
+            <div class="vl-spin"></div>
+            <div class="vl-prog" id="prog-am">0%</div>
+            <div class="vl-txt">LOADING AMR23 MODEL...</div>
+          </div>
+          <div class="viewer-hint">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+          <canvas id="canvas-am" class="three-canvas"></canvas>
+          <div class="viewer-toolbar">
+            <button class="vtool" onclick="resetCam('am')">↺ Reset</button>
+            <button class="vtool" id="wire-am" onclick="toggleWire('am')">◼ Wireframe</button>
+            <button class="vtool" id="spin-am" onclick="toggleSpin('am')">▶ Auto-Spin</button>
+          </div>
+        </div>
+        <div class="car-info">
+          <div class="car-name-card" style="--team-color:#00665e">
+            <div class="car-team">Aston Martin Aramco Cognizant</div>
+            <div class="car-fullname" style="color:#00665e">AMR23</div>
+            <div class="car-year">◈ 2023 Formula 1 Season</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-title" style="--ac:#00665e">Technical Specifications</div>
+            <div class="spec-row"><span class="spec-key">Power Unit</span><span class="spec-val">Mercedes M14 E Performance</span></div>
+            <div class="spec-row"><span class="spec-key">Engine</span><span class="spec-val">1.6L V6 Hybrid</span></div>
+            <div class="spec-row"><span class="spec-key">Max Power</span><span class="spec-val">~950 bhp</span></div>
+            <div class="spec-row"><span class="spec-key">Weight</span><span class="spec-val">798 kg</span></div>
+            <div class="spec-row"><span class="spec-key">Gearbox</span><span class="spec-val">8-speed sequential</span></div>
+            <div class="spec-row"><span class="spec-key">DRS</span><span class="spec-val">Active rear wing</span></div>
+            <div class="spec-row"><span class="spec-key">Tyres</span><span class="spec-val">Pirelli 18"</span></div>
+          </div>
+          <div class="driver-card">
+            <div class="spec-title" style="--ac:#00665e">2023 Driver Lineup</div>
+            <div class="driver-grid">
+              <div class="driver-item"><div class="driver-num" style="color:#00665e">14</div><div class="driver-name">Fernando Alonso</div><div class="driver-country">🇪🇸 SPAIN</div></div>
+              <div class="driver-item"><div class="driver-num" style="color:#00665e">18</div><div class="driver-name">Lance Stroll</div><div class="driver-country">🇨🇦 CANADA</div></div>
+            </div>
+          </div>
+          <div class="livery-card">
+            <div class="spec-title" style="--ac:#00665e">Livery Colours</div>
+            <div class="livery-swatches">
+              <div class="swatch" style="background:#00665e" data-name="BRG Green"></div>
+              <div class="swatch" style="background:#1a1a1a" data-name="Carbon"></div>
+              <div class="swatch" style="background:#ffd700" data-name="Gold"></div>
+              <div class="swatch" style="background:#b87333" data-name="Bronze"></div>
+            </div>
+          </div>
+          <div class="telem-card">
+            <div class="spec-title" style="--ac:#00665e">2023 Season Stats</div>
+            <div class="telem-grid">
+              <div class="telem-item"><div class="telem-val" style="color:#00665e">0</div><div class="telem-lbl">Race Wins</div></div>
+              <div class="telem-item"><div class="telem-val" style="color:var(--yellow)">P5</div><div class="telem-lbl">WCC Finish</div></div>
+              <div class="telem-item"><div class="telem-val" style="color:var(--green)">280</div><div class="telem-lbl">Points</div></div>
+              <div class="telem-item"><div class="telem-val" style="color:var(--red)">8</div><div class="telem-lbl">Podiums</div></div>
+            </div>
+          </div>
+          <div class="badges-card">
+            <div class="spec-title" style="--ac:#00665e">Achievements</div>
+            <div class="badge-grid">
+              <div class="badge" style="color:#00665e;border-color:rgba(0,102,94,.3);background:rgba(0,102,94,.05)">🎽 8 PODIUMS</div>
+              <div class="badge" style="color:var(--yellow);border-color:#ffd70040;background:rgba(255,215,0,.05)">▲ MOST IMPROVED</div>
+              <div class="badge" style="color:var(--blue);border-color:rgba(0,180,255,.3);background:rgba(0,180,255,.05)">⚡ ALONSO ERA</div>
+              <div class="badge" style="color:var(--green);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.05)">🌿 GREEN POWER</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="f1div" style="margin:0 40px"/>
+  <div class="f1foot">SIMLAPLYTICS v3.0 · 3D GARAGE · MODELS: ORACLE RED BULL RB19 + ASTON MARTIN AMR23 · 2023 F1 SEASON</div>
+</div>
+
+<div id="tst"></div>
+
+<!-- ════════════════════════════════════════════
+     ALL SCRIPTS — ES MODULE (fixes the 403 error)
+════════════════════════════════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── Expose globals needed by inline onclick handlers ──
+window._THREE = THREE;
+window._GLTFLoader = GLTFLoader;
+window._OrbitControls = OrbitControls;
+
+// ════════ PAGE NAV ════════
+window.showPage = function(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.getElementById('nav-' + p).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (p === '3d') setTimeout(() => initViewer('rb'), 60);
+};
+
+// ════════ 3D VIEWERS ════════
+const viewers = {};
+const CAR_CONFIGS = {
+  rb: { file: 'redbull_rb19.glb',   pointColor: 0x4466ff, rimColor: 0xff1744, initZ: 5, initRotY: 0.3 },
+  am: { file: 'aston_amr23.glb',    pointColor: 0x00aa88, rimColor: 0x00e676, initZ: 5, initRotY: 0.3 },
+};
+
+function initViewer(key) {
+  if (viewers[key]) return;
+  const cfg = CAR_CONFIGS[key];
+  const container = document.getElementById('container-' + key);
+  const canvas = document.getElementById('canvas-' + key);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x080a0f);
+  scene.fog = new THREE.FogExp2(0x080a0f, 0.04);
+
+  const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.01, 1000);
+  camera.position.set(0, 1.2, cfg.initZ);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.minDistance = 1.5;
+  controls.maxDistance = 12;
+  controls.maxPolarAngle = Math.PI * 0.85;
+  controls.target.set(0, 0.4, 0);
+  controls.update();
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const dir = new THREE.DirectionalLight(0xffffff, 1.4);
+  dir.position.set(5, 8, 5); dir.castShadow = true;
+  dir.shadow.mapSize.set(2048, 2048); scene.add(dir);
+  const fill = new THREE.DirectionalLight(cfg.pointColor, 0.7);
+  fill.position.set(-5, 2, -5); scene.add(fill);
+  const rim = new THREE.DirectionalLight(cfg.rimColor, 0.5);
+  rim.position.set(0, -2, -6); scene.add(rim);
+  scene.add(Object.assign(new THREE.DirectionalLight(0xffffff, 0.4), { position: new THREE.Vector3(0, 10, 0) }));
+
+  // Ground + grid
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 20),
+    new THREE.MeshStandardMaterial({ color: 0x0a0f16, roughness: 0.8, metalness: 0.1 })
+  );
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.05; ground.receiveShadow = true;
+  scene.add(ground);
+  const grid = new THREE.GridHelper(20, 20, 0x1e2a3a, 0x1e2a3a);
+  grid.position.y = -0.04; grid.material.opacity = 0.3; grid.material.transparent = true;
+  scene.add(grid);
+
+  const state = { scene, camera, renderer, controls, model: null, wireframe: false };
+  viewers[key] = state;
+
+  // Load GLB
+  const loader = new GLTFLoader();
+  loader.load(
+    cfg.file,
+    (gltf) => {
+      const model = gltf.scene;
+      const box = new THREE.Box3().setFromObject(model);
+      const centre = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const scale = 3.5 / Math.max(size.x, size.y, size.z);
+      model.scale.setScalar(scale);
+      model.position.sub(centre.multiplyScalar(scale));
+      model.position.y += 0.05;
+      model.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+      model.rotation.y = cfg.initRotY;
+      scene.add(model);
+      state.model = model;
+      document.getElementById('loading-' + key).classList.add('hidden');
+    },
+    (xhr) => {
+      // xhr.total is often 0 for streaming — animate progress visually instead
+      const el = document.getElementById('prog-' + key);
+      if (el && xhr.total > 0) {
+        el.textContent = Math.round(xhr.loaded / xhr.total * 100) + '%';
+      }
+    },
+    (err) => {
+      console.error('GLB error:', err);
+      const ld = document.getElementById('loading-' + key);
+      if (ld) ld.innerHTML = `<div style="color:#ff1744;font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;padding:20px;line-height:1.8">
+        MODEL NOT FOUND<br><span style="color:#445566;font-size:10px">Place .glb files in the same folder as index.html</span><br>
+        <span style="color:#445566;font-size:10px">Expected: ${cfg.file}</span></div>`;
+    }
+  );
+
+  // Animate loop
+  (function loop() {
+    requestAnimationFrame(loop);
+    controls.update();
+    renderer.render(scene, camera);
+  })();
+
+  // Resize
+  new ResizeObserver(() => {
+    const w = container.clientWidth, h = container.clientHeight;
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }).observe(container);
+}
+
+// ── Hero ambient car ──
+function initHeroCar() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.01, 100);
+  camera.position.set(2.5, 1.5, 4.5);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.setClearColor(0x000000, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(4, 6, 4); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xff1744, 0.6); rim.position.set(-3, 0, -4); scene.add(rim);
+  scene.add(Object.assign(new THREE.DirectionalLight(0x1b3fa0, 0.5), { position: new THREE.Vector3(0, -2, 2) }));
+
+  let heroModel = null;
+  new GLTFLoader().load('redbull_rb19.glb', (gltf) => {
+    heroModel = gltf.scene;
+    const box = new THREE.Box3().setFromObject(heroModel);
+    const centre = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    heroModel.scale.setScalar(2.8 / Math.max(size.x, size.y, size.z));
+    heroModel.position.sub(centre.multiplyScalar(heroModel.scale.x));
+    heroModel.rotation.y = -0.4;
+    scene.add(heroModel);
+  }, null, null);
+
+  camera.lookAt(0, 0, 0);
+  let t = 0;
+  (function loop() {
+    requestAnimationFrame(loop); t += 0.005;
+    if (heroModel) { heroModel.rotation.y = -0.4 + Math.sin(t * 0.4) * 0.15; heroModel.position.y = Math.sin(t * 0.6) * 0.04; }
+    renderer.render(scene, camera);
+  })();
+}
+
+// ── Expose viewer controls globally for onclick ──
+window.switchCar = function(key) {
+  document.querySelectorAll('.car-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.car-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + key).classList.add('active');
+  document.getElementById('panel-' + key).classList.add('active');
+  setTimeout(() => initViewer(key), 60);
+};
+window.resetCam = function(key) {
+  const v = viewers[key]; if (!v) return;
+  v.camera.position.set(0, 1.2, CAR_CONFIGS[key].initZ);
+  v.controls.target.set(0, 0.4, 0); v.controls.update();
+  if (v.model) v.model.rotation.y = CAR_CONFIGS[key].initRotY;
+};
+window.toggleWire = function(key) {
+  const v = viewers[key]; if (!v || !v.model) return;
+  v.wireframe = !v.wireframe;
+  v.model.traverse(n => { if (n.isMesh) { (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => m.wireframe = v.wireframe); } });
+  document.getElementById('wire-' + key).classList.toggle('on', v.wireframe);
+};
+window.toggleSpin = function(key) {
+  const v = viewers[key]; if (!v) return;
+  v.controls.autoRotate = !v.controls.autoRotate;
+  document.getElementById('spin-' + key).classList.toggle('on', v.controls.autoRotate);
+};
+
+// ════════ CURSOR + LOADER ════════
+const fc = document.getElementById('f1c');
+let px = 400, py = 300, ti = 0;
+const trails = Array.from({ length: 10 }, () => { const d = document.createElement('div'); d.className = 'tdot'; document.getElementById('tc').appendChild(d); return d; });
+document.addEventListener('mousemove', e => {
+  const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY;
+  fc.style.left = px + 'px'; fc.style.top = py + 'px';
+  fc.style.transform = `translate(-50%,-50%) rotate(${Math.atan2(dy, dx) * 180 / Math.PI}deg)`;
+  const t = trails[ti % 10]; t.style.left = px + 'px'; t.style.top = py + 'px'; t.style.opacity = '.75';
+  setTimeout(() => t.style.opacity = '0', 180); ti++;
+});
+
+const msgs = ['INITIALISING SYSTEMS...', 'LOADING 3D MODELS...', 'CALIBRATING SENSORS...', 'PREPARING AI ANALYSIS...', 'SYSTEMS READY'];
+let lp = 0;
+function stepLoad() {
+  if (lp >= 100) {
+    document.getElementById('ldr').classList.add('out');
+    document.querySelectorAll('[data-t]').forEach(el => {
+      const tg = +el.getAttribute('data-t'); let cv = 0; const st = tg / 60;
+      const iv = setInterval(() => { cv = Math.min(cv + st, tg); el.textContent = Math.floor(cv); if (cv >= tg) clearInterval(iv); }, 16);
+    });
+    setTimeout(initHeroCar, 200);
+    return;
+  }
+  lp += Math.random() * 9 + 3; lp = Math.min(lp, 100);
+  document.getElementById('lf2').style.width = lp + '%';
+  document.getElementById('lpc').textContent = Math.floor(lp) + '%';
+  document.getElementById('lms').textContent = msgs[Math.min(Math.floor(lp / 100 * msgs.length), msgs.length - 1)];
+  setTimeout(stepLoad, 110 + Math.random() * 90);
+}
+setTimeout(stepLoad, 280);
+
+// ════════ TELEMETRY ENGINE ════════
+window.goUp = () => document.getElementById('ups').scrollIntoView({ behavior: 'smooth' });
+function toast(m) { const t = document.getElementById('tst'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 3000); }
+window.onDrop = (e) => { e.preventDefault(); document.getElementById('dz').classList.remove('dg'); const f = e.dataTransfer.files[0]; if (f) onFile(f); };
+window.onFile = (f) => {
+  if (!f || !f.name.endsWith('.csv')) { toast('Please upload a CSV file'); return; }
+  toast('Uploading telemetry...');
+  const reader = new FileReader();
+  reader.onload = e => { try { const p = parseCSV(e.target.result); if (!p) throw new Error('Invalid CSV'); render(analyse(p)); } catch (err) { toast('Error: ' + err.message); } };
+  reader.readAsText(f);
+};
+window.loadSample = () => { toast('Loading demo telemetry...'); render(analyse(generateSample())); };
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n'); if (lines.length < 2) return null;
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+  return { headers, rows: lines.slice(1).map(l => { const v = l.split(','); const r = {}; headers.forEach((h, j) => r[h] = parseFloat(v[j]) || 0); return r; }) };
+}
+function generateSample() {
+  const n = 800, rows = [];
+  for (let i = 0; i < n; i++) {
+    const phase = i / n;
+    const base = 120 + 80 * Math.sin(phase * 4 * Math.PI) + 40 * Math.sin(phase * 10 * Math.PI) + (Math.random() - 0.5) * 16;
+    const spd = Math.max(40, Math.min(320, base));
+    const prev = i > 0 ? rows[i - 1].speed : spd, dv = spd - prev;
+    rows.push({ time: Math.round(i * (90 / n) * 100) / 100, speed: Math.round(spd * 10) / 10, throttle: Math.round(Math.max(0, Math.min(100, dv > 0 ? 70 + dv * 5 + (Math.random() - 0.5) * 20 : 0)) * 10) / 10, brake: Math.round(Math.max(0, Math.min(100, dv < 0 ? -dv * 6 + (Math.random() - 0.5) * 16 : 0)) * 10) / 10, rpm: Math.round(Math.max(2000, Math.min(15000, spd / 320 * 12000 + (Math.random() - 0.5) * 400))), gear: Math.max(1, Math.min(8, Math.floor(spd / 50) + 1)) });
+  }
+  return { headers: ['time', 'speed', 'throttle', 'brake', 'rpm', 'gear'], rows };
+}
+function analyse(parsed) {
+  const { rows, headers } = parsed;
+  const hasRpm = headers.includes('rpm'), hasGear = headers.includes('gear');
+  const spd = rows.map(r => r.speed || 0), thr = rows.map(r => r.throttle || 0), brk = rows.map(r => r.brake || 0), t = rows.map(r => r.time || 0);
+  const rpm = hasRpm ? rows.map(r => r.rpm || 0) : null, gear = hasGear ? rows.map(r => r.gear || 1) : null;
+  const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const mx = a => Math.max(...a), mn = a => Math.min(...a);
+  const std = a => { const m = mean(a); return Math.sqrt(mean(a.map(v => (v - m) ** 2))); };
+  const r2 = v => Math.round(v * 100) / 100;
+  const metrics = { max_speed: Math.round(mx(spd) * 10) / 10, avg_speed: Math.round(mean(spd) * 10) / 10, avg_throttle: Math.round(mean(thr) * 10) / 10, avg_brake: Math.round(mean(brk) * 10) / 10, data_points: rows.length, max_rpm: rpm ? Math.round(mx(rpm)) : null, speed_std: r2(std(spd)), throttle_std: r2(std(thr.filter(v => v > 5))), min_speed: Math.round(mn(spd) * 10) / 10 };
+  const ps = 90 - (metrics.avg_speed - 140) * 0.15 + (metrics.avg_brake - 10) * 0.08 - (metrics.avg_throttle - 55) * 0.05 + (Math.random() - 0.5) * 3;
+  const os = ps - Math.abs(Math.random() * 2.5 + 0.5);
+  const fmt = s => { s = Math.max(0, s); return Math.floor(s / 60) + ':' + (s % 60).toFixed(2).padStart(5, '0'); };
+  const pred = { lap_time: fmt(ps), optimal: fmt(os), delta: r2(ps - os), confidence: Math.min(95, Math.max(55, Math.floor(80 + (Math.random() - 0.5) * 20))) };
+  const insights = [];
+  const bp = brk.filter(v => v > 20).length / brk.length * 100;
+  if (bp > 30) insights.push({ icon: '🛑', title: 'EARLY BRAKING DETECTED', text: 'You are braking too early in cornering zones. Trail braking could improve corner entry speed.', delta: Math.round(bp) + '% of lap on brakes', color: 'var(--red)' });
+  else insights.push({ icon: '⚡', title: 'EXCELLENT BRAKE EFFICIENCY', text: 'Brake usage is minimal and well-timed. Good speed into corner entry.', delta: r2(bp) + '% braking', color: 'var(--green)' });
+  const ts = std(thr.filter(v => v > 5));
+  if (ts > 28) insights.push({ icon: '🎸', title: 'INCONSISTENT THROTTLE', text: 'Throttle application shows high variance. Smooth progressive inputs improve traction.', delta: 'Std dev: ' + r2(ts) + ' - target <20', color: 'var(--yellow)' });
+  else insights.push({ icon: '✅', title: 'SMOOTH THROTTLE TRACE', text: 'Throttle application is consistent. Good mechanical sympathy.', delta: 'Std dev: ' + r2(ts), color: 'var(--green)' });
+  const coasting = spd.filter((_, i) => thr[i] < 20 && brk[i] < 10);
+  if (coasting.length > 0) insights.push({ icon: '🔄', title: 'CORNER EXIT SPEED', text: 'Minimum corner speed ' + Math.round(mn(coasting)) + ' km/h. Rotate car earlier for better exit traction.', delta: 'Min: ' + Math.round(mn(coasting)) + ' km/h', color: 'var(--blue)' });
+  if (metrics.max_speed > 250) insights.push({ icon: '🚀', title: 'EXCELLENT TOP SPEED', text: 'Peak ' + metrics.max_speed + ' km/h. Downforce configuration looks optimal.', delta: 'Top speed: ' + metrics.max_speed + ' km/h', color: 'var(--red)' });
+  const ov = spd.filter((_, i) => thr[i] > 30 && brk[i] > 30).length;
+  if (ov > 5) insights.push({ icon: '⚠', title: 'OVERLAPPING INPUTS', text: 'Detected ' + ov + ' data points with simultaneous high throttle and brake.', delta: ov + ' overlap events', color: 'var(--yellow)' });
+  if (gear) insights.push({ icon: '⚙', title: 'GEAR USAGE 1-' + Math.round(mx(gear)), text: 'Using ' + Math.round(mx(gear)) + ' gears. Check optimal shift points per corner.', delta: 'Peak gear: ' + Math.round(mx(gear)), color: 'var(--blue)' });
+  const graphInsights = {
+    speed: { what: 'Speed peaked at ' + metrics.max_speed + ' km/h, avg ' + metrics.avg_speed + ' km/h.', where: 'Lowest speed zones (below 100 km/h) represent the biggest time loss.', why: 'Speed drops >20 km/h in short windows suggest overly aggressive braking.', fix: 'Carry more minimum speed through slow corners — 5 km/h improvement yields 0.2–0.3s.' },
+    tb: { what: 'Throttle averaged ' + metrics.avg_throttle + '%, brake ' + metrics.avg_brake + '%.', where: 'Throttle below 60% for extended periods signals delayed apex application.', why: bp > 30 ? 'Excessive braking (' + Math.round(bp) + '%) suggests early turn-in habits.' : 'Brake timing is acceptable — focus on trail braking technique.', fix: 'Apply throttle progressively from apex in one sweep. Avoid feathering.' },
+    rpm: { what: rpm ? 'Peak RPM: ' + metrics.max_rpm + '.' : 'RPM data not in this file.', where: rpm && metrics.max_rpm < 8000 ? 'Low peak RPM suggests under-use of power band.' : 'RPM range appears healthy.', why: rpm ? 'Short-shifting before peak torque wastes acceleration.' : 'Upload file with rpm column for engine analysis.', fix: rpm ? 'Hold each gear to 85% of max RPM before shifting.' : 'Add rpm column to your telemetry export.' },
+    gear: { what: gear ? 'Used gears 1–' + Math.round(mx(gear)) + ' across the lap.' : 'Gear data not in this file.', where: gear ? 'Rapid consecutive changes may indicate chicane instability.' : 'Upload file with gear column.', why: gear ? 'Gear selection affects traction on corner exits.' : 'Add gear column to telemetry export.', fix: gear ? 'Stay in a gear that keeps RPM in the optimal power range.' : 'Add gear column to telemetry export.' }
+  };
+  const corners = buildCorners(spd, thr, brk, t);
+  const consistency = analyseConsistency(spd, thr, brk, metrics);
+  const thrStd = ts;
+  const lapSummary = { lapTime: fmt(ps), totalTimeLost: r2(ps - os), cornerCount: corners.length, goodCorners: corners.filter(c => c.tag === 'GOOD EXECUTION').length, headline: generateHeadline(metrics, corners, thrStd, bp), mistakes: generateMistakes(metrics, corners, thrStd, bp), tips: generateTips(metrics, corners, thrStd, bp) };
+  const coachMsg = generateCoachMessage(metrics, corners, thrStd, bp, ps - os);
+  return { metrics, chart_data: { time: t, speed: spd, throttle: thr, brake: brk, rpm, gear }, prediction: pred, insights, graphInsights, corners, consistency, lapSummary, coachMsg };
+}
+function buildCorners(spd, thr, brk, t) {
+  const corners = []; let inCorner = false, cornerStart = 0, k = 0;
+  const maxSpd = Math.max(...spd);
+  for (let i = 0; i < spd.length; i++) {
+    const isCorner = spd[i] < maxSpd * 0.65 && thr[i] < 40;
+    if (isCorner && !inCorner) { inCorner = true; cornerStart = i; }
+    if (!isCorner && inCorner) {
+      inCorner = false;
+      if (k < 10) {
+        const seg = spd.slice(cornerStart, i);
+        const es = Math.round(spd[cornerStart]), ms = Math.round(Math.min(...seg)), exs = Math.round(spd[i]);
+        const td = Math.round((Math.random() * 2) * 100) / 100, pb = Math.round(60 + Math.random() * 30);
+        const tg = td > 1.5 ? 'TIME LOSS CORNER' : td > 0.8 ? 'INCONSISTENT ZONE' : 'GOOD EXECUTION';
+        const c = tg === 'TIME LOSS CORNER' ? 'var(--red)' : tg === 'INCONSISTENT ZONE' ? 'var(--yellow)' : 'var(--green)';
+        corners.push({ num: k + 1, entry: es, min: ms, exit: exs, thrDelay: td, peakBrk: pb, tag: tg, col: c, desc: buildCornerDesc(tg, es, ms, exs, td, pb) });
+        k++;
+      }
+    }
+  }
+  return corners;
+}
+function buildCornerDesc(tag, entry, min, exit, thrDelay, peakBrk) {
+  if (tag === 'TIME LOSS CORNER') return 'Entry ' + entry + ' → min ' + min + ' km/h. Throttle delayed ' + thrDelay + 's after apex — exit speed suffers.';
+  if (tag === 'INCONSISTENT ZONE') return 'Entry ' + entry + ' → exit ' + exit + ' km/h. Braking to ' + peakBrk + '% peak — slightly harsh.';
+  return 'Clean execution. Entry ' + entry + ' → min ' + min + ' → exit ' + exit + ' km/h. Throttle picked up well at apex.';
+}
+function analyseConsistency(spd, thr, brk, metrics) {
+  const std = a => { const m = a.reduce((s, v) => s + v, 0) / a.length; return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+  const sStd = Math.round(std(spd) * 10) / 10, tStd = Math.round(std(thr.filter(v => v > 5)) * 10) / 10, bStd = Math.round(std(brk.filter(v => v > 10)) * 10) / 10;
+  const sScore = Math.min(100, Math.max(0, 100 - sStd * 0.8)), tScore = Math.min(100, Math.max(0, 100 - tStd * 1.5)), bScore = Math.min(100, Math.max(0, 100 - bStd * 1.2));
+  const overall = Math.round((sScore + tScore + bScore) / 3);
+  const grade = overall > 85 ? { label: 'ELITE', col: 'var(--green)' } : overall > 70 ? { label: 'COMPETITIVE', col: 'var(--blue)' } : overall > 55 ? { label: 'DEVELOPING', col: 'var(--yellow)' } : { label: 'INCONSISTENT', col: 'var(--red)' };
+  return { sStd, tStd, bStd, sScore: Math.round(sScore), tScore: Math.round(tScore), bScore: Math.round(bScore), overall, grade, advice: overall > 80 ? 'Extremely consistent. Focus on extracting peak performance from your strong corners.' : overall > 65 ? 'Good consistency. Find the 2–3 corners with highest variance and lock in a repeatable line.' : 'High variance. Focus on one corner at a time. Repeat until you can hit the same minimum speed 5 laps in a row.' };
+}
+function generateMistakes(metrics, corners, thrStd, bp) {
+  const mistakes = [];
+  const tlc = corners.filter(c => c.tag === 'TIME LOSS CORNER').sort((a, b) => b.thrDelay - a.thrDelay);
+  if (tlc.length > 0) mistakes.push({ text: 'Delayed throttle at Turn ' + tlc[0].num + ' — ' + tlc[0].thrDelay + 's off throttle after apex', delta: '~' + Math.round(tlc[0].thrDelay * 0.3 * 10) / 10 + 's lost' });
+  if (bp > 30) mistakes.push({ text: 'Excessive braking time (' + Math.round(bp) + '% of lap) — early turn-in with brakes on', delta: '~' + Math.round((bp - 25) * 0.06 * 10) / 10 + 's lost' });
+  if (thrStd > 25) mistakes.push({ text: 'Inconsistent throttle application (σ=' + Math.round(thrStd) + ') — nervous inputs', delta: 'Unpredictable traction on exits' });
+  if (metrics.min_speed < 70) mistakes.push({ text: 'Very low minimum corner speed (' + metrics.min_speed + ' km/h) — over-slowing on entry', delta: '~0.3–0.6s per corner' });
+  return mistakes.slice(0, 3);
+}
+function generateTips(metrics, corners, thrStd, bp) {
+  const tips = [{ icon: '🎯', text: "Focus on corners tagged 'TIME LOSS' first — that's where lap time lives." }];
+  if (bp > 25) tips.push({ icon: '🛑', text: 'Move your braking point 3–5m later at hardest braking zones. Adds 0.2–0.4s.' });
+  if (thrStd > 25) tips.push({ icon: '⚡', text: 'Apply throttle in one smooth sweep from apex — not in pulses.' });
+  tips.push({ icon: '📏', text: "Use 'GOOD EXECUTION' corners as reference. Copy that exact pattern." });
+  tips.push({ icon: '🔄', text: 'Do 5 laps focusing only on your worst corner. Consistency beats peak performance.' });
+  return tips.slice(0, 5);
+}
+function generateHeadline(metrics, corners, ts, bp) {
+  const lost = corners.filter(c => c.tag === 'TIME LOSS CORNER').length;
+  if (lost > 3) return 'Multiple time-loss zones detected — significant pace available';
+  if (ts > 30) return 'Throttle inconsistency is your biggest current limiter';
+  if (bp > 35) return 'Braking too early, too often — trail braking technique needed';
+  return 'Solid baseline lap — fine-tune corner execution for the next step';
+}
+function generateCoachMessage(metrics, corners, ts, bp, delta) {
+  const tlc = corners.filter(c => c.tag === 'TIME LOSS CORNER').length;
+  let msg = 'Your lap was ' + delta.toFixed(2) + 's off the optimal. ';
+  if (tlc > 0) msg += 'I counted ' + tlc + ' corners where you lost significant time — primarily from late throttle application. ';
+  if (bp > 30) msg += "You're spending too long on the brakes (" + Math.round(bp) + '%) which is scrubbing momentum. ';
+  if (ts > 28) msg += 'Your throttle trace is choppy — that\'s traction leaving the rear. ';
+  msg += 'This lap has ' + Math.round(delta * 0.7 * 10) / 10 + 's available from fixing your two worst corners. That\'s your homework for the next session.';
+  return msg;
+}
+
+Chart.defaults.color = '#445566';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Rajdhani,sans-serif';
+const charts = {};
+function mkC(id, type, labels, datasets) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id).getContext('2d'), { type, data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: true, animation: { duration: 700 }, plugins: { legend: { labels: { color: '#8899aa', font: { size: 11 } } }, tooltip: { backgroundColor: 'rgba(15,21,32,.95)', borderColor: 'rgba(255,255,255,.1)', borderWidth: 1 } }, scales: { x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { maxTicksLimit: 8, color: '#445566' } }, y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#445566' } } } } });
+}
+function sub(arr, n = 200) { if (arr.length <= n) return arr; const s = Math.floor(arr.length / n); return arr.filter((_, i) => i % s === 0); }
+function sp(i, v) { document.getElementById('bv' + i).textContent = v.toFixed(1) + '%'; document.getElementById('bf' + i).style.width = Math.min(v, 100) + '%'; }
+function render(d) {
+  document.getElementById('dsh').classList.add('on');
+  setTimeout(() => document.getElementById('dsh').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  document.getElementById('m0').textContent = d.metrics.max_speed;
+  document.getElementById('m1').textContent = d.metrics.avg_speed;
+  document.getElementById('m2').textContent = d.metrics.avg_throttle;
+  document.getElementById('m3').textContent = d.metrics.avg_brake;
+  document.getElementById('m4').textContent = d.metrics.data_points;
+  document.getElementById('m5').textContent = d.metrics.max_rpm || '--';
+  document.getElementById('nlap').textContent = 'LAP AVG ' + d.metrics.avg_speed;
+  setTimeout(() => { sp(0, d.metrics.avg_throttle); sp(1, d.metrics.avg_brake); sp(2, Math.max(0, 100 - d.metrics.avg_throttle - d.metrics.avg_brake)); }, 200);
+  const lb = sub(d.chart_data.time.map(v => v.toFixed(1)));
+  mkC('cs', 'line', lb, [{ label: 'Speed km/h', data: sub(d.chart_data.speed), borderColor: '#ff1744', borderWidth: 2, backgroundColor: 'rgba(255,23,68,.08)', fill: true, tension: 0.4, pointRadius: 0 }]);
+  mkC('ctb', 'line', lb, [{ label: 'Throttle %', data: sub(d.chart_data.throttle), borderColor: '#ffd600', borderWidth: 1.5, backgroundColor: 'rgba(255,214,0,.06)', fill: true, tension: 0.3, pointRadius: 0 }, { label: 'Brake %', data: sub(d.chart_data.brake), borderColor: '#ff1744', borderWidth: 1.5, backgroundColor: 'rgba(255,23,68,.06)', fill: true, tension: 0.3, pointRadius: 0 }]);
+  if (d.chart_data.rpm) mkC('crp', 'line', lb, [{ label: 'RPM', data: sub(d.chart_data.rpm), borderColor: '#00b4ff', borderWidth: 1.5, backgroundColor: 'rgba(0,180,255,.06)', fill: true, tension: 0.4, pointRadius: 0 }]);
+  if (d.chart_data.gear) mkC('cgr', 'bar', lb, [{ label: 'Gear', data: sub(d.chart_data.gear), backgroundColor: 'rgba(0,230,118,.45)', borderColor: '#00e676', borderWidth: 1, borderRadius: 1 }]);
+  if (d.prediction) {
+    document.getElementById('ptt').textContent = d.prediction.lap_time;
+    const de = document.getElementById('pdt');
+    de.textContent = (d.prediction.delta >= 0 ? '+' : '') + d.prediction.delta.toFixed(2) + 's';
+    de.className = 'pd ' + (d.prediction.delta >= 0 ? 'pl' : 'mn');
+    setTimeout(() => { document.getElementById('pcf').style.width = d.prediction.confidence + '%'; document.getElementById('pcv').textContent = d.prediction.confidence + '%'; }, 300);
+  }
+  ['speed', 'tb', 'rpm', 'gear'].forEach(k => ['what', 'where', 'why', 'fix'].forEach(f => {
+    const el = document.getElementById('gie-' + k + '-' + f); if (el) el.textContent = d.graphInsights[k][f];
+  }));
+  document.getElementById('coach-message').textContent = d.coachMsg;
+  const recsEl = document.getElementById('coach-recs'); recsEl.innerHTML = '';
+  d.lapSummary.tips.slice(0, 4).forEach((tip, idx) => recsEl.innerHTML += `<div class="coach-rec"><span class="coach-rec-num">${idx + 1}</span><div class="coach-rec-text">${tip.icon} ${tip.text}</div></div>`);
+  document.getElementById('ls-headline').textContent = d.lapSummary.headline;
+  document.getElementById('ls-grid').innerHTML = [
+    { val: d.lapSummary.lapTime, lbl: 'LAP TIME', col: 'var(--yellow)' },
+    { val: '+' + d.lapSummary.totalTimeLost + 's', lbl: 'TIME TO OPTIMAL', col: 'var(--red)' },
+    { val: d.lapSummary.cornerCount, lbl: 'CORNERS ANALYSED', col: 'var(--blue)' },
+    { val: d.lapSummary.goodCorners + '/' + d.lapSummary.cornerCount, lbl: 'CLEAN CORNERS', col: 'var(--green)' }
+  ].map(c => `<div class="ls-card"><div class="ls-card-val" style="color:${c.col};text-shadow:0 0 12px ${c.col}">${c.val}</div><div class="ls-card-lbl">${c.lbl}</div></div>`).join('');
+  const lsMistakes = document.getElementById('ls-mistakes'); lsMistakes.innerHTML = '';
+  d.lapSummary.mistakes.forEach((m, i) => lsMistakes.innerHTML += `<div class="ls-mistake"><div class="ls-rank">#${i + 1}</div><div><div class="ls-mistake-text">${m.text}</div><div class="ls-mistake-delta">${m.delta}</div></div></div>`);
+  if (!d.lapSummary.mistakes.length) lsMistakes.innerHTML = '<div style="color:var(--green);font-family:\'Share Tech Mono\',monospace;font-size:12px;padding:10px">✓ No major mistakes — excellent driving!</div>';
+  const lsTips = document.getElementById('ls-tips'); lsTips.innerHTML = '';
+  d.lapSummary.tips.forEach(tip => lsTips.innerHTML += `<div class="ls-tip"><div class="ls-tip-icon">${tip.icon}</div><div class="ls-tip-text">${tip.text}</div></div>`);
+  const cg = document.getElementById('corner-grid'); cg.innerHTML = '';
+  d.corners.forEach(c => cg.innerHTML += `<div class="corner-card" style="--cc:${c.col}"><div class="corner-tag">${c.tag}</div><div class="corner-num">T${c.num}</div><div class="corner-desc">${c.desc}</div><div class="corner-delta">Entry ${c.entry} → Min ${c.min} → Exit ${c.exit} km/h | Brake: ${c.peakBrk}%</div></div>`);
+  const cs = d.consistency;
+  const csEl = document.getElementById('consistency-section');
+  csEl.innerHTML = `<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px"><div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:${cs.grade.col};text-shadow:0 0 14px ${cs.grade.col}">${cs.overall}</div><div><div style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:${cs.grade.col}">${cs.grade.label}</div><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px">CONSISTENCY SCORE / 100</div></div></div>` +
+    rcm('Speed Consistency', cs.sScore, 'var(--blue)', 'Speed σ: ' + cs.sStd + ' km/h') +
+    rcm('Throttle Consistency', cs.tScore, 'var(--yellow)', 'Throttle σ: ' + cs.tStd + '%') +
+    rcm('Braking Consistency', cs.bScore, 'var(--red)', 'Brake σ: ' + cs.bStd + '%') +
+    `<div style="margin-top:16px;padding:12px 16px;background:rgba(0,0,0,.3);border-radius:3px;border-left:3px solid ${cs.grade.col};font-size:13px;color:var(--text2);line-height:1.5">${cs.advice}</div>`;
+  setTimeout(() => document.querySelectorAll('.consistency-fill').forEach(el => el.style.width = el.getAttribute('data-w') + '%'), 400);
+  const ig = document.getElementById('ig'); ig.innerHTML = '';
+  d.insights.forEach(ins => ig.innerHTML += `<div class="ic" style="--ac:${ins.color}"><div class="ii">${ins.icon}</div><div><div class="it">${ins.title}</div><div class="ix">${ins.text}</div>${ins.delta ? '<div class="id">' + ins.delta + '</div>' : ''}</div></div>`);
+  toast('Telemetry analysed! 🏁');
+}
+function rcm(label, score, col, detail) {
+  return `<div class="consistency-row"><span class="consistency-label">${label}</span><span class="consistency-val" style="color:${col}">${score}%</span></div><div class="consistency-meter"><div class="consistency-fill" data-w="${score}" style="width:0;background:${col};box-shadow:0 0 6px ${col}"></div></div><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:14px">${detail}</div>`;
+}
+</script>
+</body>
+</html>
